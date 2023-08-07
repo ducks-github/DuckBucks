@@ -1,0 +1,34 @@
+src/*.exe
+src/duckbucks
+src/duckbucksd
+src/test_duckbucks
+.*.swp
+*.*~*
+*.bak
+*.rej
+*.orig
+*.o
+*.patch
+.duckbucks
+
+# Compilation and Qt preprocessor part
+*.qm
+Makefile
+duckbucks-qt
+Duckbucks-Qt.app
+
+# Unit-tests
+Makefile.test
+duckbucks-qt_test
+
+# Resources cpp
+qrc_*.cpp
+
+# Qt creator
+*.pro.user
+
+# Mac specific
+.DS_Store
+build
+
+!src/leveldb*/Makefile
