@@ -17,7 +17,7 @@ The rest is the same as Bitcoin.
  - 52 coins per block
  - 2016 blocks to retarget difficulty
 
-   uses port 8333
+   uses port 6335
 
 For more information, as well as an immediately useable, binary version of
 the Duckbucks client sofware, see http://www.duckbucks.org.
@@ -71,4 +71,3 @@ Unit tests for the GUI code are in `src/qt/test/`. To compile and run them:
     qmake BITCOIN_QT_TEST=1 -o Makefile.test bitcoin-qt.pro
     make -f Makefile.test
     ./duckbucks-qt_test
-
