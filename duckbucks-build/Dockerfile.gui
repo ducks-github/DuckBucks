@@ -27,6 +27,11 @@ RUN apt-get update && apt-get install -y \
     wget \
     fuse \
     libfuse2 \
+    # Add these essential development packages
+    gcc-multilib \
+    g++-multilib \
+    libc6-dev \
+    linux-libc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -46,7 +51,7 @@ RUN cd src/leveldb && \
 # Create build directory
 RUN mkdir -p build
 
-# Build the Qt GUI
+# Build the Qt GUI with modified include paths
 RUN cd build && \
     qmake \
     "USE_UPNP=1" \
@@ -58,6 +63,8 @@ RUN cd build && \
     "BDB_INCLUDE_PATH=/usr/include" \
     "BDB_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
     "INCLUDEPATH+=/usr/include/x86_64-linux-gnu" \
+    "INCLUDEPATH+=/usr/include" \
+    "INCLUDEPATH+=/usr/lib/gcc/x86_64-linux-gnu/9/include" \
     "../bitcoin-qt.pro" && \
     make -j$(nproc)
 
