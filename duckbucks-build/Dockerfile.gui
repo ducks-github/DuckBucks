@@ -36,11 +36,10 @@ RUN ls -la /app
 RUN chmod +x /app/src/leveldb/build_detect_platform
 
 # Patch src/bignum.h to fix OpenSSL compatibility
-# Step 1: Replace inheritance with composition
-RUN sed -i 's/class[[:space:]]*CBigNum[[:space:]]*:[[:space:]]*public[[:space:]]*BIGNUM[[:space:]]*{/class CBigNum { private: BIGNUM bn; public:/g' /app/src/bignum.h
-
-# Step 2: Replace OpenSSL functions using 'this' with '&bn'
 RUN sed -i \
+    # Step 1: Replace inheritance with composition
+    -e 's/class[[:space:]]*CBigNum[[:space:]]*:[[:space:]]*public[[:space:]]*BIGNUM[[:space:]]*{/class CBigNum { private: BIGNUM bn; public:/g' \
+    # Step 2: Replace OpenSSL functions using 'this' with '&bn'
     -e 's/BN_init(this)/BN_init(\&bn)/g' \
     -e 's/BN_copy(this,/BN_copy(\&bn,/g' \
     -e 's/BN_set_word(this,/BN_set_word(\&bn,/g' \
@@ -59,10 +58,7 @@ RUN sed -i \
     -e 's/BN_is_negative(this)/BN_is_negative(\&bn)/g' \
     -e 's/BN_cmp(\([^,]*\),[[:space:]]*this)/BN_cmp(\1,\&bn)/g' \
     -e 's/BN_cmp(this,/BN_cmp(\&bn,/g' \
-    /app/src/bignum.h
-
-# Step 3: Replace references to other CBigNum objects with their 'bn' member
-RUN sed -i \
+    # Step 3: Replace references to other CBigNum objects with their 'bn' member
     -e 's/\([[:space:]]*\)\&b)/\1\&b.bn)/g' \
     -e 's/\([[:space:]]*\)\&a)/\1\&a.bn)/g' \
     -e 's/\([[:space:]]*\)\&dv)/\1\&dv.bn)/g' \
@@ -71,14 +67,12 @@ RUN sed -i \
     -e 's/\([[:space:]]*\)\&bn58)/\1\&bn58.bn)/g' \
     -e 's/\([[:space:]]*\)\&bnBase)/\1\&bnBase.bn)/g' \
     -e 's/\([[:space:]]*\)\&r)/\1\&r.bn)/g' \
-    /app/src/bignum.h
-
-# Debug: Output the patched bignum.h to the build log
-RUN cat /app/src/bignum.h
+    /app/src/bignum.h && \
+    cat /app/src/bignum.h
 
 # Build the Qt GUI
-RUN qmake "USE_UPNP=1" "USE_QRCODE=1" "RELEASE=1" /app/bitcoin-qt.pro
-RUN make -j$(nproc)
+RUN qmake "USE_UPNP=1" "USE_QRCODE=1" "RELEASE=1" /app/duckbucks-qt.pro && \
+    make -j$(nproc)
 
 # Download linuxdeploy and make it executable
 RUN wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
