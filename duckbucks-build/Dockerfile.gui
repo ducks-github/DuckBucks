@@ -40,34 +40,38 @@ RUN chmod +x /app/src/leveldb/build_detect_platform
 RUN sed -i 's/class[[:space:]]*CBigNum[[:space:]]*:[[:space:]]*public[[:space:]]*BIGNUM[[:space:]]*{/class CBigNum { private: BIGNUM bn; public:/g' /app/src/bignum.h
 
 # Step 2: Replace OpenSSL functions using 'this' with '&bn'
-RUN sed -i 's/BN_init(this)/BN_init(\&bn)/g' /app/src/bignum.h \
-    && sed -i 's/BN_copy(this,/BN_copy(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_set_word(this,/BN_set_word(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_set_negative(this,/BN_set_negative(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_add(this,/BN_add(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_mul(this,/BN_mul(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_lshift(this,/BN_lshift(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_rshift(this,/BN_rshift(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_div(this,/BN_div(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_mod(this,/BN_mod(\&bn,/g' /app/src/bignum.h \
-    && sed -i 's/BN_mpi2bn(\([^,]*\),\([^,]*\),[[:space:]]*this)/BN_mpi2bn(\1,\2,\&bn)/g' /app/src/bignum.h \
-    && sed -i 's/BN_bn2mpi(\([^,]*\),[[:space:]]*this)/BN_bn2mpi(\&bn,\1)/g' /app/src/bignum.h \
-    && sed -i 's/BN_num_bytes(this)/BN_num_bytes(\&bn)/g' /app/src/bignum.h \
-    && sed -i 's/BN_get_word(this)/BN_get_word(\&bn)/g' /app/src/bignum.h \
-    && sed -i 's/BN_is_zero(this)/BN_is_zero(\&bn)/g' /app/src/bignum.h \
-    && sed -i 's/BN_is_negative(this)/BN_is_negative(\&bn)/g' /app/src/bignum.h \
-    && sed -i 's/BN_cmp(\([^,]*\),[[:space:]]*this)/BN_cmp(\1,\&bn)/g' /app/src/bignum.h \
-    && sed -i 's/BN_cmp(this,/BN_cmp(\&bn,/g' /app/src/bignum.h
+RUN sed -i \
+    -e 's/BN_init(this)/BN_init(\&bn)/g' \
+    -e 's/BN_copy(this,/BN_copy(\&bn,/g' \
+    -e 's/BN_set_word(this,/BN_set_word(\&bn,/g' \
+    -e 's/BN_set_negative(this,/BN_set_negative(\&bn,/g' \
+    -e 's/BN_add(this,/BN_add(\&bn,/g' \
+    -e 's/BN_mul(this,/BN_mul(\&bn,/g' \
+    -e 's/BN_lshift(this,/BN_lshift(\&bn,/g' \
+    -e 's/BN_rshift(this,/BN_rshift(\&bn,/g' \
+    -e 's/BN_div(this,/BN_div(\&bn,/g' \
+    -e 's/BN_mod(this,/BN_mod(\&bn,/g' \
+    -e 's/BN_mpi2bn(\([^,]*\),\([^,]*\),[[:space:]]*this)/BN_mpi2bn(\1,\2,\&bn)/g' \
+    -e 's/BN_bn2mpi(\([^,]*\),[[:space:]]*this)/BN_bn2mpi(\&bn,\1)/g' \
+    -e 's/BN_num_bytes(this)/BN_num_bytes(\&bn)/g' \
+    -e 's/BN_get_word(this)/BN_get_word(\&bn)/g' \
+    -e 's/BN_is_zero(this)/BN_is_zero(\&bn)/g' \
+    -e 's/BN_is_negative(this)/BN_is_negative(\&bn)/g' \
+    -e 's/BN_cmp(\([^,]*\),[[:space:]]*this)/BN_cmp(\1,\&bn)/g' \
+    -e 's/BN_cmp(this,/BN_cmp(\&bn,/g' \
+    /app/src/bignum.h
 
 # Step 3: Replace references to other CBigNum objects with their 'bn' member
-RUN sed -i 's/\([[:space:]]*\)\&b)/\1\&b.bn)/g' /app/src/bignum.h \
-    && sed -i 's/\([[:space:]]*\)\&a)/\1\&a.bn)/g' /app/src/bignum.h \
-    && sed -i 's/\([[:space:]]*\)\&dv)/\1\&dv.bn)/g' /app/src/bignum.h \
-    && sed -i 's/\([[:space:]]*\)\&rem)/\1\&rem.bn)/g' /app/src/bignum.h \
-    && sed -i 's/\([[:space:]]*\)\&bn0)/\1\&bn0.bn)/g' /app/src/bignum.h \
-    && sed -i 's/\([[:space:]]*\)\&bn58)/\1\&bn58.bn)/g' /app/src/bignum.h \
-    && sed -i 's/\([[:space:]]*\)\&bnBase)/\1\&bnBase.bn)/g' /app/src/bignum.h \
-    && sed -i 's/\([[:space:]]*\)\&r)/\1\&r.bn)/g' /app/src/bignum.h
+RUN sed -i \
+    -e 's/\([[:space:]]*\)\&b)/\1\&b.bn)/g' \
+    -e 's/\([[:space:]]*\)\&a)/\1\&a.bn)/g' \
+    -e 's/\([[:space:]]*\)\&dv)/\1\&dv.bn)/g' \
+    -e 's/\([[:space:]]*\)\&rem)/\1\&rem.bn)/g' \
+    -e 's/\([[:space:]]*\)\&bn0)/\1\&bn0.bn)/g' \
+    -e 's/\([[:space:]]*\)\&bn58)/\1\&bn58.bn)/g' \
+    -e 's/\([[:space:]]*\)\&bnBase)/\1\&bnBase.bn)/g' \
+    -e 's/\([[:space:]]*\)\&r)/\1\&r.bn)/g' \
+    /app/src/bignum.h
 
 # Debug: Output the patched bignum.h to the build log
 RUN cat /app/src/bignum.h
