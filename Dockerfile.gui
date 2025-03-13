@@ -61,6 +61,7 @@ RUN cd build && \
     "QMAKE_CXXFLAGS+=-fPIC" \
     "QMAKE_CXXFLAGS+=-isystem /usr/include/x86_64-linux-gnu" \
     "QMAKE_CXXFLAGS+=-isystem /usr/include" \
+    "QMAKE_CXXFLAGS+=-isystem /usr/lib/gcc/x86_64-linux-gnu/9/include" \
     "BOOST_INCLUDE_PATH=/usr/include" \
     "BOOST_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
     "BDB_INCLUDE_PATH=/usr/include" \

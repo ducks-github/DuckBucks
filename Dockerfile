@@ -4,6 +4,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     build-essential \
+    gcc-9 \
+    g++-9 \
+    libc6-dev \
+    libc6-dev-amd64-cross \
     cmake \
     git \
     libssl-dev \
