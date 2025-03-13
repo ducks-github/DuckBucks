@@ -230,353 +230,45 @@ inline std::string StackString(const std::vector<std::vector<unsigned char> >& v
 }
 
 /** Serialized script, used inside transaction inputs and outputs */
-class CScript : public std::vector<unsigned char>
-{
-protected:
-    CScript& push_int64(int64 n)
-    {
-        if (n == -1 || (n >= 1 && n <= 16))
-        {
-            push_back(n + (OP_1 - 1));
-        }
-        else
-        {
-            CBigNum bn(static_cast<int64_t>(n)); // Explicitly use int64_t constructor
-            *this << bn.getvch();
-        }
-        return *this;
-    }
-
-    CScript& push_uint64(uint64 n)
-    {
-        if (n >= 1 && n <= 16)
-        {
-            push_back(n + (OP_1 - 1));
-        }
-        else
-        {
-            CBigNum bn(static_cast<uint64_t>(n)); // Explicitly use uint64_t constructor
-            *this << bn.getvch();
-        }
-        return *this;
-    }
+class CScript {
+private:
+    std::vector<unsigned char> data;
 
 public:
-    CScript() { }
-    CScript(const CScript& b) : std::vector<unsigned char>(b.begin(), b.end()) { }
-    CScript(const_iterator pbegin, const_iterator pend) : std::vector<unsigned char>(pbegin, pend) { }
-#ifndef _MSC_VER
-    CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<unsigned char>(pbegin, pend) { }
-#endif
+    // Constructors
+    CScript() = default;
+    CScript(const CScript& b) = default;
+    CScript(CScript&& b) noexcept = default;
+    
+    // Assignment operators
+    CScript& operator=(const CScript& b) = default;
+    CScript& operator=(CScript&& b) noexcept = default;
 
-    CScript& operator+=(const CScript& b)
-    {
-        insert(end(), b.begin(), b.end());
-        return *this;
+    // Vector-like interface
+    using iterator = std::vector<unsigned char>::iterator;
+    using const_iterator = std::vector<unsigned char>::const_iterator;
+    
+    iterator begin() { return data.begin(); }
+    iterator end() { return data.end(); }
+    const_iterator begin() const { return data.begin(); }
+    const_iterator end() const { return data.end(); }
+    
+    void clear() { data.clear(); }
+    size_t size() const { return data.size(); }
+    bool empty() const { return data.empty(); }
+    
+    void insert(iterator pos, const_iterator first, const_iterator last) {
+        data.insert(pos, first, last);
     }
-
-    friend CScript operator+(const CScript& a, const CScript& b)
-    {
-        CScript ret = a;
-        ret += b;
-        return ret;
-    }
-
-    //explicit CScript(char b) is not portable.  Use 'signed char' or 'unsigned char'.
-    explicit CScript(signed char b)    { operator<<(b); }
-    explicit CScript(short b)          { operator<<(b); }
-    explicit CScript(int b)            { operator<<(b); }
-    explicit CScript(long b)           { operator<<(b); }
-    explicit CScript(int64 b)          { operator<<(b); }
-    explicit CScript(unsigned char b)  { operator<<(b); }
-    explicit CScript(unsigned int b)   { operator<<(b); }
-    explicit CScript(unsigned short b) { operator<<(b); }
-    explicit CScript(unsigned long b)  { operator<<(b); }
-    explicit CScript(uint64 b)         { operator<<(b); }
-
-    explicit CScript(opcodetype b)     { operator<<(b); }
-    explicit CScript(const uint256& b) { operator<<(b); }
-    explicit CScript(const CBigNum& b) { operator<<(b); }
-    explicit CScript(const std::vector<unsigned char>& b) { operator<<(b); }
-
-    //CScript& operator<<(char b) is not portable.  Use 'signed char' or 'unsigned char'.
-    CScript& operator<<(signed char b)    { return push_int64(b); }
-    CScript& operator<<(short b)          { return push_int64(b); }
-    CScript& operator<<(int b)            { return push_int64(b); }
-    CScript& operator<<(long b)           { return push_int64(b); }
-    CScript& operator<<(int64 b)          { return push_int64(b); }
-    CScript& operator<<(unsigned char b)  { return push_uint64(b); }
-    CScript& operator<<(unsigned int b)   { return push_uint64(b); }
-    CScript& operator<<(unsigned short b) { return push_uint64(b); }
-    CScript& operator<<(unsigned long b)  { return push_uint64(b); }
-    CScript& operator<<(uint64 b)         { return push_uint64(b); }
-
-    CScript& operator<<(opcodetype opcode)
-    {
-        if (opcode < 0 || opcode > 0xff)
-            throw std::runtime_error("CScript::operator<<() : invalid opcode");
-        insert(end(), (unsigned char)opcode);
-        return *this;
-    }
-
-    CScript& operator<<(const uint160& b)
-    {
-        insert(end(), sizeof(b));
-        insert(end(), (unsigned char*)&b, (unsigned char*)&b + sizeof(b));
-        return *this;
-    }
-
-    CScript& operator<<(const uint256& b)
-    {
-        insert(end(), sizeof(b));
-        insert(end(), (unsigned char*)&b, (unsigned char*)&b + sizeof(b));
-        return *this;
-    }
-
-    CScript& operator<<(const CPubKey& key)
-    {
-        assert(key.size() < OP_PUSHDATA1);
-        insert(end(), (unsigned char)key.size());
-        insert(end(), key.begin(), key.end());
-        return *this;
-    }
-
-    CScript& operator<<(const CBigNum& b)
-    {
-        *this << b.getvch();
-        return *this;
-    }
-
-    CScript& operator<<(const std::vector<unsigned char>& b)
-    {
-        if (b.size() < OP_PUSHDATA1)
-        {
-            insert(end(), (unsigned char)b.size());
-        }
-        else if (b.size() <= 0xff)
-        {
-            insert(end(), OP_PUSHDATA1);
-            insert(end(), (unsigned char)b.size());
-        }
-        else if (b.size() <= 0xffff)
-        {
-            insert(end(), OP_PUSHDATA2);
-            unsigned short nSize = b.size();
-            insert(end(), (unsigned char*)&nSize, (unsigned char*)&nSize + sizeof(nSize));
-        }
-        else
-        {
-            insert(end(), OP_PUSHDATA4);
-            unsigned int nSize = b.size();
-            insert(end(), (unsigned char*)&nSize, (unsigned char*)&nSize + sizeof(nSize));
-        }
-        insert(end(), b.begin(), b.end());
-        return *this;
-    }
-
-    CScript& operator<<(const CScript& b)
-    {
-        // I'm not sure if this should push the script or concatenate scripts.
-        // If there's ever a use for pushing a script onto a script, delete this member fn
-        assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
-        return *this;
-    }
-
-    bool GetOp(iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet)
-    {
-         // Wrapper so it can be called with either iterator or const_iterator
-         const_iterator pc2 = pc;
-         bool fRet = GetOp2(pc2, opcodeRet, &vchRet);
-         pc = begin() + (pc2 - begin());
-         return fRet;
-    }
-
-    bool GetOp(iterator& pc, opcodetype& opcodeRet)
-    {
-         const_iterator pc2 = pc;
-         bool fRet = GetOp2(pc2, opcodeRet, NULL);
-         pc = begin() + (pc2 - begin());
-         return fRet;
-    }
-
-    bool GetOp(const_iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet) const
-    {
-        return GetOp2(pc, opcodeRet, &vchRet);
-    }
-
-    bool GetOp(const_iterator& pc, opcodetype& opcodeRet) const
-    {
-        return GetOp2(pc, opcodeRet, NULL);
-    }
-
-    bool GetOp2(const_iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>* pvchRet) const
-    {
-        opcodeRet = OP_INVALIDOPCODE;
-        if (pvchRet)
-            pvchRet->clear();
-        if (pc >= end())
-            return false;
-
-        // Read instruction
-        if (end() - pc < 1)
-            return false;
-        unsigned int opcode = *pc++;
-
-        // Immediate operand
-        if (opcode <= OP_PUSHDATA4)
-        {
-            unsigned int nSize = 0;
-            if (opcode < OP_PUSHDATA1)
-            {
-                nSize = opcode;
-            }
-            else if (opcode == OP_PUSHDATA1)
-            {
-                if (end() - pc < 1)
-                    return false;
-                nSize = *pc++;
-            }
-            else if (opcode == OP_PUSHDATA2)
-            {
-                if (end() - pc < 2)
-                    return false;
-                nSize = 0;
-                memcpy(&nSize, &pc[0], 2);
-                pc += 2;
-            }
-            else if (opcode == OP_PUSHDATA4)
-            {
-                if (end() - pc < 4)
-                    return false;
-                memcpy(&nSize, &pc[0], 4);
-                pc += 4;
-            }
-            if (end() - pc < 0 || (unsigned int)(end() - pc) < nSize)
-                return false;
-            if (pvchRet)
-                pvchRet->assign(pc, pc + nSize);
-            pc += nSize;
-        }
-
-        opcodeRet = (opcodetype)opcode;
-        return true;
-    }
-
-    // Encode/decode small integers:
-    static int DecodeOP_N(opcodetype opcode)
-    {
-        if (opcode == OP_0)
-            return 0;
-        assert(opcode >= OP_1 && opcode <= OP_16);
-        return (int)opcode - (int)(OP_1 - 1);
-    }
-    static opcodetype EncodeOP_N(int n)
-    {
-        assert(n >= 0 && n <= 16);
-        if (n == 0)
-            return OP_0;
-        return (opcodetype)(OP_1+n-1);
-    }
-
-    int FindAndDelete(const CScript& b)
-    {
-        int nFound = 0;
-        if (b.empty())
-            return nFound;
-        iterator pc = begin();
-        opcodetype opcode;
-        do
-        {
-            while (end() - pc >= (long)b.size() && memcmp(&pc[0], &b[0], b.size()) == 0)
-            {
-                erase(pc, pc + b.size());
-                ++nFound;
-            }
-        }
-        while (GetOp(pc, opcode));
-        return nFound;
-    }
-    int Find(opcodetype op) const
-    {
-        int nFound = 0;
-        opcodetype opcode;
-        for (const_iterator pc = begin(); pc != end() && GetOp(pc, opcode);)
-            if (opcode == op)
-                ++nFound;
-        return nFound;
-    }
-
-    // Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs
-    // as 20 sigops. With pay-to-script-hash, that changed:
-    // CHECKMULTISIGs serialized in scriptSigs are
-    // counted more accurately, assuming they are of the form
-    //  ... OP_N CHECKMULTISIG ...
-    unsigned int GetSigOpCount(bool fAccurate) const;
-
-    // Accurately count sigOps, including sigOps in
-    // pay-to-script-hash transactions:
-    unsigned int GetSigOpCount(const CScript& scriptSig) const;
-
-    bool IsPayToScriptHash() const;
-
-    // Called by CTransaction::IsStandard and P2SH VerifyScript (which makes it consensus-critical).
-    bool IsPushOnly() const
-    {
-        const_iterator pc = begin();
-        while (pc < end())
-        {
-            opcodetype opcode;
-            if (!GetOp(pc, opcode))
-                return false;
-            if (opcode > OP_16)
-                return false;
-        }
-        return true;
-    }
-
-    // Called by IsStandardTx.
-    bool HasCanonicalPushes() const;
-
-    void SetDestination(const CTxDestination& address);
-    void SetMultisig(int nRequired, const std::vector<CPubKey>& keys);
-
-    void PrintHex() const
-    {
-        printf("CScript(%s)\n", HexStr(begin(), end(), true).c_str());
-    }
-
-    std::string ToString() const
-    {
-        std::string str;
-        opcodetype opcode;
-        std::vector<unsigned char> vch;
-        const_iterator pc = begin();
-        while (pc < end())
-        {
-            if (!str.empty())
-                str += " ";
-            if (!GetOp(pc, opcode, vch))
-            {
-                str += "[error]";
-                return str;
-            }
-            if (0 <= opcode && opcode <= OP_PUSHDATA4)
-                str += ValueString(vch);
-            else
-                str += GetOpName(opcode);
-        }
-        return str;
-    }
-
-    void print() const
-    {
-        printf("%s\n", ToString().c_str());
-    }
-
-    CScriptID GetID() const
-    {
-        return CScriptID(Hash160(*this));
-    }
+    
+    // Only expose necessary vector operations
+    void push_back(unsigned char value) { data.push_back(value); }
+    unsigned char& operator[](size_t pos) { return data[pos]; }
+    const unsigned char& operator[](size_t pos) const { return data[pos]; }
+    
+    // Conversion to/from vector if needed
+    std::vector<unsigned char>& get_data() { return data; }
+    const std::vector<unsigned char>& get_data() const { return data; }
 };
 
 /** Compact serializer for scripts.
