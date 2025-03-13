@@ -31,9 +31,11 @@ RUN apt-get update && apt-get install -y \
     g++-multilib \
     libc6-dev \
     linux-libc-dev \
-    # Add these specific packages
     libc6-dev-i386 \
     lib32stdc++-9-dev \
+    # Add these packages explicitly
+    linux-libc-dev:amd64 \
+    libc6-dev:amd64 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -53,6 +55,10 @@ RUN cd src/leveldb && \
 # Create build directory
 RUN mkdir -p build
 
+# Verify system headers
+RUN ls -la /usr/include/stdlib.h || true
+RUN ls -la /usr/include/x86_64-linux-gnu/stdlib.h || true
+
 # Build the Qt GUI with modified include paths and compiler flags
 RUN cd build && \
     qmake \
@@ -62,6 +68,7 @@ RUN cd build && \
     "QMAKE_CXXFLAGS+=-Wno-deprecated-copy" \
     "QMAKE_CXXFLAGS+=-m64" \
     "QMAKE_CXXFLAGS+=-fPIC" \
+    "QMAKE_CXXFLAGS+=-I/usr/include/x86_64-linux-gnu" \
     "BOOST_INCLUDE_PATH=/usr/include" \
     "BOOST_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
     "BDB_INCLUDE_PATH=/usr/include" \
@@ -70,6 +77,8 @@ RUN cd build && \
     "INCLUDEPATH+=/usr/include" \
     "INCLUDEPATH+=/usr/lib/gcc/x86_64-linux-gnu/9/include" \
     "INCLUDEPATH+=/usr/lib/x86_64-linux-gnu" \
+    "INCLUDEPATH+=/usr/include/c++/9" \
+    "INCLUDEPATH+=/usr/include/x86_64-linux-gnu/c++/9" \
     "../bitcoin-qt.pro" && \
     make -j$(nproc)
 
