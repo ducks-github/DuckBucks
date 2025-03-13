@@ -6,10 +6,10 @@ ENV VERSION=v02
 # Install basic build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
+    linux-libc-dev \
+    libc6-dev \
     gcc-9 \
     g++-9 \
-    libc6-dev \
-    linux-libc-dev \
     cmake \
     git \
     libssl-dev \
@@ -59,9 +59,9 @@ RUN cd build && \
     "QMAKE_CXX=g++-9" \
     "QMAKE_CXXFLAGS+=-Wno-deprecated-copy" \
     "QMAKE_CXXFLAGS+=-fPIC" \
-    "QMAKE_CXXFLAGS+=-isystem /usr/include/x86_64-linux-gnu" \
-    "QMAKE_CXXFLAGS+=-isystem /usr/include" \
-    "QMAKE_CXXFLAGS+=-isystem /usr/lib/gcc/x86_64-linux-gnu/9/include" \
+    "QMAKE_CXXFLAGS+=-I/usr/include/x86_64-linux-gnu" \
+    "QMAKE_CXXFLAGS+=-I/usr/include" \
+    "QMAKE_CXXFLAGS+=-I/usr/lib/gcc/x86_64-linux-gnu/9/include" \
     "BOOST_INCLUDE_PATH=/usr/include" \
     "BOOST_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
     "BDB_INCLUDE_PATH=/usr/include" \
