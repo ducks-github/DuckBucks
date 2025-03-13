@@ -12,11 +12,16 @@ RUN apt-get update && apt-get install -y \
     libboost-all-dev \
     libdb++-dev \
     libdb-dev \
+    libdb5.3-dev \
+    libdb5.3++-dev \
     libevent-dev \
     qt5-default \
     qttools5-dev \
     qttools5-dev-tools \
     libqt5gui5 \
+    libqt5core5a \
+    libqt5dbus5 \
+    qt5-qmake \
     libminiupnpc-dev \
     libqrencode-dev \
     wget \
@@ -26,32 +31,24 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Clone the repository with the correct URL
+# Clone the repository
 RUN git clone https://github.com/ducks-github/duckbucks.git .
-
-# Debug: List contents to verify .pro file location
-RUN ls -la /app
 
 # Fix permissions for leveldb build scripts
 RUN chmod +x /app/src/leveldb/build_detect_platform
 
-# Patch src/bignum.h to fix OpenSSL compatibility
-RUN sed -i \
-    -e 's/class[[:space:]]*CBigNum[[:space:]]*:[[:space:]]*public[[:space:]]*BIGNUM[[:space:]]*{/class CBigNum { private: BIGNUM bn; public:/g' \
-    -e 's/BN_init(this)/BN_init(\&bn)/g' \
-    -e 's/BN_copy(this,/BN_copy(\&bn,/g' \
-    -e 's/BN_set_word(this,/BN_set_word(\&bn,/g' \
-    -e 's/BN_set_negative(this,/BN_set_negative(\&bn,/g' \
-    -e 's/BN_add(this,/BN_add(\&bn,/g' \
-    -e 's/BN_mul(this,/BN_mul(\&bn,/g' \
-    -e 's/BN_lshift(this,/BN_lshift(\&bn,/g' \
-    -e 's/BN_rshift(this,/BN_rshift(\&bn,/g' \
-    -e 's/BN_div(this,/BN_div(\&bn,/g' \
-    -e 's/BN_mod(this,/BN_mod(\&bn,/g' \
-    /app/src/bignum.h
+# Build leveldb first
+RUN cd src/leveldb && \
+    make clean && \
+    make libleveldb.a libmemenv.a && \
+    cd ../..
+
+# Create build directory
+RUN mkdir -p build
 
 # Build the Qt GUI
-RUN qmake \
+RUN cd build && \
+    qmake \
     "USE_UPNP=1" \
     "USE_QRCODE=1" \
     "RELEASE=1" \
@@ -60,20 +57,21 @@ RUN qmake \
     "BOOST_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
     "BDB_INCLUDE_PATH=/usr/include" \
     "BDB_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
-    bitcoin-qt.pro && \
+    "INCLUDEPATH+=/usr/include/x86_64-linux-gnu" \
+    "../bitcoin-qt.pro" && \
     make -j$(nproc)
-
-# Download linuxdeploy and make it executable
-RUN wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
-    && wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage \
-    && chmod +x linuxdeploy*.AppImage
 
 # Create AppDir structure
 RUN mkdir -p AppDir/usr/bin \
-    && cp duckbucks-qt AppDir/usr/bin/
+    && cp build/duckbucks-qt AppDir/usr/bin/
 
 # Create desktop file
 RUN echo "[Desktop Entry]\nName=DuckBucks\nExec=duckbucks-qt\nType=Application\n" > AppDir/duckbucks.desktop
+
+# Download and prepare linuxdeploy
+RUN wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
+    && wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage \
+    && chmod +x linuxdeploy*.AppImage
 
 # Package into an AppImage
 RUN VERSION=${VERSION} ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
