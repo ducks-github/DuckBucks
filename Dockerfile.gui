@@ -39,7 +39,29 @@ RUN apt-get update && apt-get install -y \
     gcc-9 \
     g++-9 \
     libc6-dev-i386 \
-    linux-libc-dev:i386
+    linux-libc-dev:i386 \
+    qt5-default \
+    qttools5-dev \
+    qttools5-dev-tools \
+    libqt5gui5 \
+    libqt5core5a \
+    libqt5dbus5 \
+    libqrencode-dev \
+    libprotobuf-dev \
+    protobuf-compiler \
+    libqt5widgets5 \
+    libboost-all-dev \
+    libdb++-dev \
+    libminiupnpc-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Fix stdlib.h issue by creating proper symlinks
+RUN ln -s /usr/include/x86_64-linux-gnu/sys /usr/include/sys \
+    && ln -s /usr/include/x86_64-linux-gnu/bits /usr/include/bits \
+    && ln -s /usr/include/x86_64-linux-gnu/gnu /usr/include/gnu \
+    && ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm \
+    && ln -s /usr/lib/x86_64-linux-gnu/crt*.o /usr/lib
 
 # Build the Qt GUI
 RUN cd build && \

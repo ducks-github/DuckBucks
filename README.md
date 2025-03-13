@@ -10,17 +10,14 @@ What is Duckbucks?
 
 Duckbucks is a lite version of Bitcoin using scrypt as a proof-of-work algorithm.
  - 2.5 minute block targets
- - subsidy halves in 694200 blocks (~X years)
- - ~X million total coins
-
-The rest is the same as Bitcoin.
+ - subsidy halves in 694200 blocks (~4 years)
+ - 69,420,666 total coins
  - 52 coins per block
  - 2016 blocks to retarget difficulty
-
-   uses port 6335
+ - Uses port 6335
 
 For more information, as well as an immediately useable, binary version of
-the Duckbucks client sofware, see http://www.duckbucks.org.
+the Duckbucks client software, see http://www.duckbucks.org.
 
 License
 -------
