@@ -10,19 +10,15 @@ RUN apt-get update && apt-get install -y \
     git \
     libssl-dev \
     libboost-all-dev \
-    libdb5.3-dev \
-    libdb++-dev \
+    libobs-dev \
     libevent-dev \
     qt5-default \
-    qt5-qmake \
     qttools5-dev \
     qttools5-dev-tools \
     libqt5gui5 \
-    libqt5core5a \
-    libqt5dbus5 \
+    libdb++-dev \
     libminiupnpc-dev \
     libqrencode-dev \
-    # AppImage dependencies
     wget \
     fuse \
     libfuse2 \
@@ -30,11 +26,44 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Clone the repository (you'll need to provide the correct URL)
-RUN git clone https://github.com/your-repo/duckbucks.git .
+# Clone the repository with the correct URL
+RUN git clone https://github.com/ducks-github/duckbucks.git .
 
-# Build the Qt GUI
-RUN qmake "USE_UPNP=1" "USE_QRCODE=1" "RELEASE=1" duckbucks-qt.pro
+# Debug: List contents to verify .pro file location
+RUN ls -la /app
+
+# Fix permissions for leveldb build scripts
+RUN chmod +x /app/src/leveldb/build_detect_platform
+
+# Apply patch to fix bignum.h
+RUN sed -i 's/class CBigNum[[:space:]]*:[[:space:]]*public BIGNUM[[:space:]]*{/class CBigNum { private: BIGNUM bn; public:/g' /app/src/bignum.h
+RUN sed -i 's/BN_init(this)/BN_init(\&bn)/g' /app/src/bignum.h
+RUN sed -i 's/BN_copy(this,\([[:space:]]*[&]b\))/BN_copy(\&bn,\1)/g' /app/src/bignum.h
+RUN sed -i 's/BN_clear_free(this)/BN_clear_free(\&bn)/g' /app/src/bignum.h
+RUN sed -i 's/BN_set_word(this,\([[:space:]]*\)/BN_set_word(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_add(this,\([[:space:]]*\)/BN_add(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_sub(this,\([[:space:]]*\)/BN_sub(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_mul(this,\([[:space:]]*\)/BN_mul(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_div(this,\([[:space:]]*\)/BN_div(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_mod(this,\([[:space:]]*\)/BN_mod(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_lshift(this,\([[:space:]]*\)/BN_lshift(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_rshift(this,\([[:space:]]*\)/BN_rshift(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_cmp(this,\([[:space:]]*[&]\)/BN_cmp(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_is_negative(this)/BN_is_negative(\&bn)/g' /app/src/bignum.h
+RUN sed -i 's/BN_num_bytes(this)/BN_num_bytes(\&bn)/g' /app/src/bignum.h
+RUN sed -i 's/BN_get_word(this)/BN_get_word(\&bn)/g' /app/src/bignum.h
+RUN sed -i 's/BN_set_negative(this,\([[:space:]]*\)/BN_set_negative(\&bn,\1/g' /app/src/bignum.h
+RUN sed -i 's/BN_mpi2bn(\([^,]*\),\s*\([^,]*\),\s*)this/BN_mpi2bn(\1,\2,\&bn)/g' /app/src/bignum.h
+RUN sed -i 's/BN_bn2mpi(this,\([[:space:]]*\)/BN_bn2mpi(\&bn,\1/g' /app/src/bignum.h
+
+# Debug: Save the patched bignum.h for inspection
+RUN cat /app/src/bignum.h > /app/patched_bignum.h
+
+# Debug: Stop the build to inspect the patched file
+RUN false
+
+# Build the Qt GUI (using the correct .pro file)
+RUN qmake "USE_UPNP=1" "USE_QRCODE=1" "RELEASE=1" /app/bitcoin-qt.pro
 RUN make -j$(nproc)
 
 # Download linuxdeploy and make it executable
@@ -44,21 +73,12 @@ RUN wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous
 
 # Create AppDir structure
 RUN mkdir -p AppDir/usr/bin \
-    && cp duckbucks-qt AppDir/usr/bin/
+    && cp duckbucks-qt AppDir/usr/bin
 
 # Create desktop file
-RUN echo "[Desktop Entry]\n\
-Name=DuckBucks\n\
-Comment=DuckBucks Qt wallet\n\
-Exec=duckbucks-qt\n\
-Icon=duckbucks\n\
-Terminal=false\n\
-Type=Application\n\
-Categories=Office;Finance;" > AppDir/duckbucks-qt.desktop
+RUN echo "[Desktop Entry]\nName=DuckBucks\nExec=duckbucks-qt\nType=Application\n" > AppDir/duckbucks.desktop
 
-# Copy icon (assuming there's an icon file in the source)
-RUN cp src/qt/res/icons/bitcoin.png AppDir/duckbucks.png
+# Package into an AppImage
+RUN ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
 
-# Create the AppImage with specific name
-RUN VERSION=${VERSION} ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
-RUN mv DuckBucks-${VERSION}-x86_64.AppImage DuckBucks_v02.AppImage
+CMD ["./DuckBucks.AppImage"]
