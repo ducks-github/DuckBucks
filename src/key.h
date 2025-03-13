@@ -6,11 +6,18 @@
 #define BITCOIN_KEY_H
 
 #include <vector>
+#include <stdexcept> // Added for key_error
 
 #include "allocators.h"
 #include "serialize.h"
 #include "uint256.h"
 #include "hash.h"
+
+// Define key_error class for exception handling
+class key_error : public std::runtime_error {
+public:
+    explicit key_error(const std::string& str) : std::runtime_error(str) {}
+};
 
 // secp256k1:
 // const unsigned int PRIVATE_KEY_SIZE = 279;

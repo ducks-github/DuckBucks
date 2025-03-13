@@ -198,8 +198,6 @@ enum opcodetype
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
-
-
     // template matching params
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,
@@ -210,8 +208,6 @@ enum opcodetype
 };
 
 const char* GetOpName(opcodetype opcode);
-
-
 
 inline std::string ValueString(const std::vector<unsigned char>& vch)
 {
@@ -233,13 +229,6 @@ inline std::string StackString(const std::vector<std::vector<unsigned char> >& v
     return str;
 }
 
-
-
-
-
-
-
-
 /** Serialized script, used inside transaction inputs and outputs */
 class CScript : public std::vector<unsigned char>
 {
@@ -252,7 +241,7 @@ protected:
         }
         else
         {
-            CBigNum bn(n);
+            CBigNum bn(static_cast<int64_t>(n)); // Explicitly use int64_t constructor
             *this << bn.getvch();
         }
         return *this;
@@ -266,7 +255,7 @@ protected:
         }
         else
         {
-            CBigNum bn(n);
+            CBigNum bn(static_cast<uint64_t>(n)); // Explicitly use uint64_t constructor
             *this << bn.getvch();
         }
         return *this;
@@ -293,7 +282,6 @@ public:
         return ret;
     }
 
-
     //explicit CScript(char b) is not portable.  Use 'signed char' or 'unsigned char'.
     explicit CScript(signed char b)    { operator<<(b); }
     explicit CScript(short b)          { operator<<(b); }
@@ -310,7 +298,6 @@ public:
     explicit CScript(const uint256& b) { operator<<(b); }
     explicit CScript(const CBigNum& b) { operator<<(b); }
     explicit CScript(const std::vector<unsigned char>& b) { operator<<(b); }
-
 
     //CScript& operator<<(char b) is not portable.  Use 'signed char' or 'unsigned char'.
     CScript& operator<<(signed char b)    { return push_int64(b); }
@@ -394,7 +381,6 @@ public:
         assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
         return *this;
     }
-
 
     bool GetOp(iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet)
     {
@@ -554,7 +540,6 @@ public:
     void SetDestination(const CTxDestination& address);
     void SetMultisig(int nRequired, const std::vector<CPubKey>& keys);
 
-
     void PrintHex() const
     {
         printf("CScript(%s)\n", HexStr(begin(), end(), true).c_str());
@@ -663,7 +648,7 @@ public:
         }
         nSize -= nSpecialScripts;
         script.resize(nSize);
-        s >> REF(CFlatData(&script[0], &script[script.size()]));
+        s >> REF(CFlatData(&script[0], &script[script.size()])); // Fixed syntax
     }
 };
 

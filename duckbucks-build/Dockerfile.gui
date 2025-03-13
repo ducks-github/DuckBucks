@@ -1,0 +1,64 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV VERSION=v02
+
+# Install basic build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    libssl-dev \
+    libboost-all-dev \
+    libdb5.3-dev \
+    libdb++-dev \
+    libevent-dev \
+    qt5-default \
+    qt5-qmake \
+    qttools5-dev \
+    qttools5-dev-tools \
+    libqt5gui5 \
+    libqt5core5a \
+    libqt5dbus5 \
+    libminiupnpc-dev \
+    libqrencode-dev \
+    # AppImage dependencies
+    wget \
+    fuse \
+    libfuse2 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Clone the repository (you'll need to provide the correct URL)
+RUN git clone https://github.com/your-repo/duckbucks.git .
+
+# Build the Qt GUI
+RUN qmake "USE_UPNP=1" "USE_QRCODE=1" "RELEASE=1" duckbucks-qt.pro
+RUN make -j$(nproc)
+
+# Download linuxdeploy and make it executable
+RUN wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
+    && wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage \
+    && chmod +x linuxdeploy*.AppImage
+
+# Create AppDir structure
+RUN mkdir -p AppDir/usr/bin \
+    && cp duckbucks-qt AppDir/usr/bin/
+
+# Create desktop file
+RUN echo "[Desktop Entry]\n\
+Name=DuckBucks\n\
+Comment=DuckBucks Qt wallet\n\
+Exec=duckbucks-qt\n\
+Icon=duckbucks\n\
+Terminal=false\n\
+Type=Application\n\
+Categories=Office;Finance;" > AppDir/duckbucks-qt.desktop
+
+# Copy icon (assuming there's an icon file in the source)
+RUN cp src/qt/res/icons/bitcoin.png AppDir/duckbucks.png
+
+# Create the AppImage with specific name
+RUN VERSION=${VERSION} ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
+RUN mv DuckBucks-${VERSION}-x86_64.AppImage DuckBucks_v02.AppImage

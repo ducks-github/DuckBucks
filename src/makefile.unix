@@ -2,20 +2,23 @@
 # Distributed under the MIT/X11 software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-# :=0 --> UPnP support turned off by default at runtime
-# :=1 --> UPnP support turned on by default at runtime
-# :=- --> No UPnP support - miniupnp not required
 USE_UPNP:=0
-
-# :=1 --> Enable IPv6 support
-# :=0 --> Disable IPv6 support
 USE_IPV6:=1
 
 LINK:=$(CXX)
 
 DEFS=-DBOOST_SPIRIT_THREADSAFE -D_FILE_OFFSET_BITS=64
 
-DEFS += $(addprefix -I,$(CURDIR) $(CURDIR)/obj $(BOOST_INCLUDE_PATH) $(BDB_INCLUDE_PATH) $(OPENSSL_INCLUDE_PATH))
+# Include paths for Boost
+BOOST_INCLUDE_PATH ?= /usr/include
+INCLUDEPATHS= \
+ -I"$(CURDIR)" \
+ -I"$(CURDIR)/obj" \
+ -I"$(BOOST_INCLUDE_PATH)" \
+ -I"$(BDB_INCLUDE_PATH)" \
+ -I"$(OPENSSL_INCLUDE_PATH)"
+
+DEFS += $(INCLUDEPATHS)
 LIBS = $(addprefix -L,$(BOOST_LIB_PATH) $(BDB_LIB_PATH) $(OPENSSL_LIB_PATH))
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
@@ -64,7 +67,6 @@ LIBS+= \
    -l dl \
    -l pthread
 
-
 # Hardening
 # Make some classes of vulnerabilities unexploitable in case one is discovered.
 #
@@ -98,11 +100,9 @@ LIBS+= \
     HARDENING+=-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 #
 
-
 DEBUGFLAGS=-g
 
-# CXXFLAGS can be specified on the make command line, so we use xCXXFLAGS that only
-# adds some defaults in front. Unfortunately, CXXFLAGS=... $(CXXFLAGS) does not work.
+# xCXXFLAGS incorporates DEFS and HARDENING, so the -I/usr/include from DEFS will be included
 xCXXFLAGS=-O2 -pthread -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter \
     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)
 
@@ -143,7 +143,6 @@ OBJS= \
     obj/noui.o \
     obj/leveldb.o \
     obj/txdb.o
-
 
 ifdef USE_SSE2
 DEFS += -DUSE_SSE2
