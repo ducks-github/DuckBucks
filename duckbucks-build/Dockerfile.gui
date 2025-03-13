@@ -54,6 +54,21 @@ RUN cd src/leveldb && \
 # Create build directory
 RUN mkdir -p build
 
+# Before the build commands, add these essential packages
+RUN apt-get update && apt-get install -y \
+    gcc-9 \
+    g++-9 \
+    libc6-dev \
+    linux-libc-dev \
+    libstdc++-9-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Make sure the symlinks are correct
+RUN ln -sf /usr/include/x86_64-linux-gnu/sys /usr/include/sys \
+    && ln -sf /usr/include/x86_64-linux-gnu/bits /usr/include/bits \
+    && ln -sf /usr/include/x86_64-linux-gnu/gnu /usr/include/gnu \
+    && ln -sf /usr/include/x86_64-linux-gnu/asm /usr/include/asm
+
 # Build the Qt GUI
 RUN cd build && \
     qmake \

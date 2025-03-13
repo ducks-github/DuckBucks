@@ -57,11 +57,18 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Fix stdlib.h issue by creating proper symlinks
-RUN ln -s /usr/include/x86_64-linux-gnu/sys /usr/include/sys \
-    && ln -s /usr/include/x86_64-linux-gnu/bits /usr/include/bits \
-    && ln -s /usr/include/x86_64-linux-gnu/gnu /usr/include/gnu \
-    && ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm \
-    && ln -s /usr/lib/x86_64-linux-gnu/crt*.o /usr/lib
+RUN apt-get update && apt-get install -y \
+    gcc-9 \
+    g++-9 \
+    libc6-dev \
+    linux-libc-dev \
+    && mkdir -p /usr/include/x86_64-linux-gnu \
+    && ln -sf /usr/include/stdlib.h /usr/include/x86_64-linux-gnu/stdlib.h \
+    && ln -sf /usr/include/x86_64-linux-gnu/bits /usr/include/bits \
+    && ln -sf /usr/include/x86_64-linux-gnu/gnu /usr/include/gnu \
+    && ln -sf /usr/include/x86_64-linux-gnu/asm /usr/include/asm \
+    && ln -sf /usr/include/x86_64-linux-gnu/sys /usr/include/sys \
+    && ln -sf /usr/lib/x86_64-linux-gnu/crt*.o /usr/lib
 
 # Build the Qt GUI
 RUN cd build && \
