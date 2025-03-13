@@ -35,23 +35,20 @@ public:
 class CBigNum {
 private:
     BIGNUM bn;  // Composition instead of inheritance
-
 public:
-    // Constructor - initialize the BIGNUM structure
     CBigNum() {
-        BN_init(&bn);
+        BN_init(&bn);  // Safer - explicit member access
     }
 
-    // Copy constructor - deep copy the BIGNUM
+    ~CBigNum() {
+        BN_clear_free(&bn);  // Safer - no pointer manipulation
+    }
+
+    // Copy constructor
     CBigNum(const CBigNum& b) {
         BN_init(&bn);
         if (!BN_copy(&bn, &b.bn))
             throw std::runtime_error("CBigNum::CBigNum(const CBigNum&) : BN_copy failed");
-    }
-
-    // Destructor - properly free BIGNUM resources
-    ~CBigNum() {
-        BN_clear_free(&bn);
     }
 
     // Assignment operator
