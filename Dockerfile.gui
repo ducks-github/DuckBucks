@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV VERSION=v02
 
 # Install basic build dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y \
     build-essential \
     gcc-9 \
     g++-9 \
@@ -18,8 +18,7 @@ RUN apt-get update && apt-get install -y \
     # AppImage dependencies
     wget \
     fuse \
-    libfuse2 \
-    && rm -rf /var/lib/apt/lists/*
+    libfuse2
 
 # Verify Boost installation
 RUN ldconfig && \
@@ -38,7 +37,9 @@ RUN apt-get update && apt-get install -y \
     libc6-dev \
     linux-libc-dev \
     gcc-9 \
-    g++-9
+    g++-9 \
+    libc6-dev-i386 \
+    linux-libc-dev:i386
 
 # Build the Qt GUI
 RUN cd build && \
