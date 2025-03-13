@@ -32,6 +32,14 @@ WORKDIR /app
 # Clone the repository
 RUN git clone https://github.com/ducks-github/duckbucks.git .
 
+# Add these before the build step
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libc6-dev \
+    linux-libc-dev \
+    gcc-9 \
+    g++-9
+
 # Build the Qt GUI
 RUN cd build && \
     qmake \
@@ -42,9 +50,8 @@ RUN cd build && \
     "QMAKE_CXX=g++-9" \
     "QMAKE_CXXFLAGS+=-Wno-deprecated-copy" \
     "QMAKE_CXXFLAGS+=-fPIC" \
-    "QMAKE_CXXFLAGS+=-I/usr/include/x86_64-linux-gnu" \
-    "QMAKE_CXXFLAGS+=-I/usr/include" \
-    "QMAKE_CXXFLAGS+=-I/usr/lib/gcc/x86_64-linux-gnu/9/include" \
+    "QMAKE_CXXFLAGS+=-isystem /usr/include/x86_64-linux-gnu" \
+    "QMAKE_CXXFLAGS+=-isystem /usr/include" \
     "BOOST_INCLUDE_PATH=/usr/include" \
     "BOOST_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
     "BDB_INCLUDE_PATH=/usr/include" \
