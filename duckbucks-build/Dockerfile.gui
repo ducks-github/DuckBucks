@@ -56,12 +56,6 @@ RUN sed -i 's/BN_set_negative(this,\([[:space:]]*\)/BN_set_negative(\&bn,\1/g' /
 RUN sed -i 's/BN_mpi2bn(\([^,]*\),\s*\([^,]*\),\s*)this/BN_mpi2bn(\1,\2,\&bn)/g' /app/src/bignum.h
 RUN sed -i 's/BN_bn2mpi(this,\([[:space:]]*\)/BN_bn2mpi(\&bn,\1/g' /app/src/bignum.h
 
-# Debug: Save the patched bignum.h for inspection
-RUN cat /app/src/bignum.h > /app/patched_bignum.h
-
-# Debug: Stop the build to inspect the patched file
-RUN false
-
 # Build the Qt GUI (using the correct .pro file)
 RUN qmake "USE_UPNP=1" "USE_QRCODE=1" "RELEASE=1" /app/bitcoin-qt.pro
 RUN make -j$(nproc)
