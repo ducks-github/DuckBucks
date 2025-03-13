@@ -6,6 +6,10 @@ ENV VERSION=v02
 # Install basic build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
+    gcc-9 \
+    g++-9 \
+    libc6-dev \
+    linux-libc-dev \
     cmake \
     git \
     libssl-dev \
@@ -42,14 +46,26 @@ RUN ldconfig && \
 
 WORKDIR /app
 
-# Clone the repository (you'll need to provide the correct URL)
-RUN git clone https://github.com/your-repo/duckbucks.git .
+# Clone the repository
+RUN git clone https://github.com/ducks-github/duckbucks.git .
 
 # Build the Qt GUI
-RUN qmake "USE_UPNP=1" "USE_QRCODE=1" "RELEASE=1" \
+RUN cd build && \
+    qmake \
+    "USE_UPNP=1" \
+    "USE_QRCODE=1" \
+    "RELEASE=1" \
+    "QMAKE_CC=gcc-9" \
+    "QMAKE_CXX=g++-9" \
+    "QMAKE_CXXFLAGS+=-Wno-deprecated-copy" \
+    "QMAKE_CXXFLAGS+=-fPIC" \
+    "QMAKE_CXXFLAGS+=-isystem /usr/include/x86_64-linux-gnu" \
+    "QMAKE_CXXFLAGS+=-isystem /usr/include" \
     "BOOST_INCLUDE_PATH=/usr/include" \
     "BOOST_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
-    bitcoin-qt.pro && \
+    "BDB_INCLUDE_PATH=/usr/include" \
+    "BDB_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
+    "../bitcoin-qt.pro" && \
     make -j$(nproc)
 
 # Download linuxdeploy and make it executable
