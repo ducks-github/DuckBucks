@@ -10,13 +10,13 @@ RUN apt-get update && apt-get install -y \
     git \
     libssl-dev \
     libboost-all-dev \
-    libobs-dev \
+    libdb++-dev \
+    libdb-dev \
     libevent-dev \
     qt5-default \
     qttools5-dev \
     qttools5-dev-tools \
     libqt5gui5 \
-    libdb++-dev \
     libminiupnpc-dev \
     libqrencode-dev \
     wget \
@@ -37,9 +37,7 @@ RUN chmod +x /app/src/leveldb/build_detect_platform
 
 # Patch src/bignum.h to fix OpenSSL compatibility
 RUN sed -i \
-    # Step 1: Replace inheritance with composition
     -e 's/class[[:space:]]*CBigNum[[:space:]]*:[[:space:]]*public[[:space:]]*BIGNUM[[:space:]]*{/class CBigNum { private: BIGNUM bn; public:/g' \
-    # Step 2: Replace OpenSSL functions using 'this' with '&bn'
     -e 's/BN_init(this)/BN_init(\&bn)/g' \
     -e 's/BN_copy(this,/BN_copy(\&bn,/g' \
     -e 's/BN_set_word(this,/BN_set_word(\&bn,/g' \
@@ -50,28 +48,19 @@ RUN sed -i \
     -e 's/BN_rshift(this,/BN_rshift(\&bn,/g' \
     -e 's/BN_div(this,/BN_div(\&bn,/g' \
     -e 's/BN_mod(this,/BN_mod(\&bn,/g' \
-    -e 's/BN_mpi2bn(\([^,]*\),\([^,]*\),[[:space:]]*this)/BN_mpi2bn(\1,\2,\&bn)/g' \
-    -e 's/BN_bn2mpi(\([^,]*\),[[:space:]]*this)/BN_bn2mpi(\&bn,\1)/g' \
-    -e 's/BN_num_bytes(this)/BN_num_bytes(\&bn)/g' \
-    -e 's/BN_get_word(this)/BN_get_word(\&bn)/g' \
-    -e 's/BN_is_zero(this)/BN_is_zero(\&bn)/g' \
-    -e 's/BN_is_negative(this)/BN_is_negative(\&bn)/g' \
-    -e 's/BN_cmp(\([^,]*\),[[:space:]]*this)/BN_cmp(\1,\&bn)/g' \
-    -e 's/BN_cmp(this,/BN_cmp(\&bn,/g' \
-    # Step 3: Replace references to other CBigNum objects with their 'bn' member
-    -e 's/\([[:space:]]*\)\&b)/\1\&b.bn)/g' \
-    -e 's/\([[:space:]]*\)\&a)/\1\&a.bn)/g' \
-    -e 's/\([[:space:]]*\)\&dv)/\1\&dv.bn)/g' \
-    -e 's/\([[:space:]]*\)\&rem)/\1\&rem.bn)/g' \
-    -e 's/\([[:space:]]*\)\&bn0)/\1\&bn0.bn)/g' \
-    -e 's/\([[:space:]]*\)\&bn58)/\1\&bn58.bn)/g' \
-    -e 's/\([[:space:]]*\)\&bnBase)/\1\&bnBase.bn)/g' \
-    -e 's/\([[:space:]]*\)\&r)/\1\&r.bn)/g' \
-    /app/src/bignum.h && \
-    cat /app/src/bignum.h
+    /app/src/bignum.h
 
 # Build the Qt GUI
-RUN qmake "USE_UPNP=1" "USE_QRCODE=1" "RELEASE=1" "QMAKE_CXXFLAGS+=-Wno-deprecated-copy" /app/bitcoin-qt.pro && \
+RUN qmake \
+    "USE_UPNP=1" \
+    "USE_QRCODE=1" \
+    "RELEASE=1" \
+    "QMAKE_CXXFLAGS+=-Wno-deprecated-copy" \
+    "BOOST_INCLUDE_PATH=/usr/include" \
+    "BOOST_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
+    "BDB_INCLUDE_PATH=/usr/include" \
+    "BDB_LIB_PATH=/usr/lib/x86_64-linux-gnu" \
+    bitcoin-qt.pro && \
     make -j$(nproc)
 
 # Download linuxdeploy and make it executable
@@ -81,12 +70,12 @@ RUN wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous
 
 # Create AppDir structure
 RUN mkdir -p AppDir/usr/bin \
-    && cp duckbucks-qt AppDir/usr/bin
+    && cp duckbucks-qt AppDir/usr/bin/
 
 # Create desktop file
 RUN echo "[Desktop Entry]\nName=DuckBucks\nExec=duckbucks-qt\nType=Application\n" > AppDir/duckbucks.desktop
 
 # Package into an AppImage
-RUN ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
+RUN VERSION=${VERSION} ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
 
-CMD ["./DuckBucks.AppImage"]
+CMD ["./DuckBucks-${VERSION}-x86_64.AppImage"]
