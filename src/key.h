@@ -6,11 +6,18 @@
 #define BITCOIN_KEY_H
 
 #include <vector>
+#include <stdexcept> // Added for key_error
 
 #include "allocators.h"
 #include "serialize.h"
 #include "uint256.h"
 #include "hash.h"
+
+// Define key_error class for exception handling
+class key_error : public std::runtime_error {
+public:
+    explicit key_error(const std::string& str) : std::runtime_error(str) {}
+};
 
 // secp256k1:
 // const unsigned int PRIVATE_KEY_SIZE = 279;
@@ -251,6 +258,24 @@ public:
     //                  0x1D = second key with even y, 0x1E = second key with odd y,
     //                  add 0x04 for compressed keys.
     bool SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) const;
+
+    CKey& operator=(const CKey& other) {
+        if (this != &other) {  // Self-assignment check
+            // Securely clear existing key data
+            OPENSSL_cleanse(vch, sizeof(vch));
+            
+            // Copy state flags
+            fValid = other.fValid;
+            fCompressed = other.fCompressed;
+            
+            // Secure copy of key data
+            if (fValid) {
+                LockObject(vch);
+                memcpy_safe(vch, other.vch, sizeof(vch));
+            }
+        }
+        return *this;
+    }
 };
 
 #endif
