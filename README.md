@@ -19,6 +19,61 @@ Duckbucks is a lite version of Bitcoin using scrypt as a proof-of-work algorithm
 For more information, as well as an immediately useable, binary version of
 the Duckbucks client software, see http://www.duckbucks.org.
 
+Mimblewimble Privacy Feature
+---------------------------
+
+Duckbucks now includes Mimblewimble protocol integration for enhanced privacy and scalability:
+
+ - Confidential Transactions hide the transaction amounts
+ - Improved blockchain scalability through transaction aggregation
+ - Enhanced privacy for users through the Dandelion++ protocol
+ - Accessible through both GUI and RPC interfaces
+
+Available Mimblewimble RPC commands:
+ - `runmwtest` - Run a test transaction using Mimblewimble
+ - `getmwbalance` - Get your private Mimblewimble balance
+ - `createmwoutput` - Create a test Mimblewimble output
+ - `createmwtransaction` - Create a Mimblewimble private transaction
+
+AppImage Installation
+-------------------
+
+We provide AppImage releases for easy installation on Linux systems:
+
+1. Download the appropriate AppImage from the releases page:
+   - `duckbucks_v02.AppImage` - Standard version
+   - `duckbucks_mw.AppImage` - Version with Mimblewimble privacy features
+
+2. Make the AppImage executable:
+   ```bash
+   chmod +x duckbucks_mw.AppImage
+   ```
+
+3. Run the AppImage:
+   ```bash
+   ./duckbucks_mw.AppImage
+   ```
+
+No installation is required, and the application will run on most modern Linux distributions.
+
+Creating Your Own AppImage
+-------------------------
+
+If you want to build your own AppImage from source:
+
+1. Build the Qt application:
+   ```bash
+   qmake
+   make
+   ```
+
+2. Run the AppImage creation script:
+   ```bash
+   ./create_mw_appimage.sh
+   ```
+
+This will create a `duckbucks_mw.AppImage` file in the project root directory.
+
 License
 -------
 
