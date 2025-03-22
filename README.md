@@ -56,6 +56,70 @@ We provide AppImage releases for easy installation on Linux systems:
 
 No installation is required, and the application will run on most modern Linux distributions.
 
+Building Cross-Compatible AppImages
+----------------------------------
+
+The enhanced build script creates AppImages that work across a wide range of Linux distributions by bundling all necessary dependencies. To build a fully compatible AppImage:
+
+### Prerequisites
+
+Install the required build dependencies:
+
+```bash
+# For Debian/Ubuntu-based systems
+sudo apt-get update
+sudo apt-get install -y build-essential libssl-dev libdb++-dev libboost-all-dev \
+  qt5-default libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools \
+  libqrencode-dev libprotobuf-dev protobuf-compiler wget fuse libfuse2 \
+  imagemagick libqt5svg5-dev
+
+# For Fedora/RHEL-based systems
+sudo dnf install -y gcc-c++ openssl-devel libdb-cxx-devel boost-devel \
+  qt5-qtbase-devel qt5-qttools-devel qrencode-devel protobuf-devel \
+  protobuf-compiler wget fuse fuse-libs imagemagick qt5-qtsvg-devel
+```
+
+### Building the AppImage
+
+1. Clone the repository and build the Qt application:
+   ```bash
+   git clone https://github.com/ducks-github/DuckBucks.git
+   cd DuckBucks
+   qmake
+   make -j$(nproc)
+   ```
+
+2. Run the enhanced AppImage creation script:
+   ```bash
+   chmod +x create_mw_appimage.sh
+   ./create_mw_appimage.sh
+   ```
+
+3. The script will:
+   - Check for required tools (wget, ImageMagick, FUSE)
+   - Create a properly structured AppDir with all necessary components
+   - Include AppStream metadata for better desktop integration
+   - Bundle required libraries to ensure compatibility across distributions
+   - Set up compatibility hooks for various Linux environments
+   - Create the final `duckbucks_mw.AppImage` file
+
+### Troubleshooting
+
+If you encounter issues:
+
+- **Missing FUSE**: Install FUSE with `sudo apt-get install fuse libfuse2` (Debian/Ubuntu) or `sudo dnf install fuse fuse-libs` (Fedora/RHEL)
+- **Runtime library errors**: The AppImage includes compatibility hooks but may need additional libraries. Run with `--appimage-extract` to extract the AppImage contents and examine library dependencies
+- **GUI issues**: Ensure Qt5 is properly installed on your system
+- **Permission denied**: Make sure the AppImage is executable (`chmod +x duckbucks_mw.AppImage`)
+
+### Custom Builds
+
+You can customize the AppImage by modifying `create_mw_appimage.sh`:
+
+- Change the AppImage version by setting `export VERSION=X.Y.Z` before running the script
+- Add additional libraries by modifying the `copy_binary()` function
+- Customize the application metadata in the AppStream XML file
+
 Creating Your Own AppImage
 -------------------------
 
