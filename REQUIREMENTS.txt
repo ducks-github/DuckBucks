@@ -1,0 +1,63 @@
+DuckBucks Wallet - System Requirements
+=====================================
+
+MINIMUM SYSTEM REQUIREMENTS
+--------------------------
+- Linux distribution (Ubuntu 18.04+ or equivalent)
+- 2 GB RAM minimum (4 GB recommended)
+- 2 GB free disk space for blockchain data
+- x86_64 processor
+- Working internet connection
+- FUSE installed (required for AppImage)
+
+REQUIRED PACKAGES
+----------------
+The DuckBucks wallet requires the following packages to be installed:
+
+For Ubuntu/Debian-based systems:
+```
+sudo apt-get update
+sudo apt-get install -y fuse libfuse2 libxcb-xinerama0 libglib2.0-0
+```
+
+For Fedora/RHEL-based systems:
+```
+sudo dnf install -y fuse fuse-libs libxcb glib2
+```
+
+For Arch-based systems:
+```
+sudo pacman -S --needed fuse2 libxcb glib2
+```
+
+CHECKING FUSE INSTALLATION
+-------------------------
+FUSE (Filesystem in Userspace) is required for AppImages to run. To check if FUSE is installed:
+
+```
+grep -q "fuse" /proc/filesystems && echo "FUSE is available" || echo "FUSE is not available"
+```
+
+If FUSE is not available, install it using the commands above for your distribution.
+
+GRAPHICS REQUIREMENTS
+-------------------
+- The wallet requires a working graphics environment
+- Compatible with X11 and Wayland display servers
+- Qt-compatible desktop environment
+
+NETWORKING REQUIREMENTS
+---------------------
+- Outbound connections on port 11998 (for P2P network)
+- Inbound connections not required for basic wallet functionality
+
+DATA USAGE NOTICE
+---------------
+- Initial blockchain sync may use significant bandwidth
+- Regular usage requires minimal data transfer 
+
+SECURITY RECOMMENDATIONS
+---------------------
+- Run the wallet on a secure system with up-to-date security patches
+- Use a firewall to restrict inbound connections
+- Keep your wallet.dat file backed up in a secure location 
